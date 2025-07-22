@@ -1,0 +1,203 @@
+{% extends "base.html" %}
+
+{% block title %}Chat - ChatApp{% endblock %}
+
+{% block extra_head %}
+<script src="https://cdn.socket.io/4.0.0/socket.io.min.js"></script>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid p-0" style="height: calc(100vh - 56px);">
+    <div class="row g-0 h-100">
+        <!-- Sidebar -->
+        <div class="col-12 col-md-4 col-lg-3 border-end" id="sidebar">
+            <div class="d-flex flex-column h-100">
+                <!-- Search -->
+                <div class="p-3 border-bottom">
+                    <div class="input-group">
+                        <span class="input-group-text">
+                            <i class="fas fa-search"></i>
+                        </span>
+                        <input type="text" class="form-control" id="searchInput" placeholder="Search users or messages...">
+                    </div>
+                    <div class="mt-2">
+                        <button class="btn btn-sm btn-primary" id="newChatBtn">
+                            <i class="fas fa-plus me-1"></i>New Chat
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Conversations List -->
+                <div class="flex-grow-1 overflow-auto" id="conversationsList">
+                    <div class="list-group list-group-flush">
+                        {% for conversation in conversations %}
+                        <div class="list-group-item list-group-item-action conversation-item" 
+                             data-conversation-id="{{ conversation.id }}">
+                            <div class="d-flex align-items-center">
+                                <div class="flex-shrink-0 me-3">
+                                    {% if conversation.is_group %}
+                                        <div class="bg-secondary rounded-circle d-flex align-items-center justify-content-center" style="width: 40px; height: 40px;">
+                                            <i class="fas fa-users text-white"></i>
+                                        </div>
+                                    {% else %}
+                                        {% set other_user = conversation.get_other_participant(current_user.id) %}
+                                        {% if other_user and other_user.avatar_url %}
+                                            <img src="{{ other_user.avatar_url }}" alt="Avatar" class="rounded-circle" width="40" height="40">
+                                        {% else %}
+                                            <div class="bg-secondary rounded-circle d-flex align-items-center justify-content-center" style="width: 40px; height: 40px;">
+                                                <i class="fas fa-user text-white"></i>
+                                            </div>
+                                        {% endif %}
+                                    {% endif %}
+                                </div>
+                                <div class="flex-grow-1 min-width-0">
+                                    <h6 class="mb-1 text-truncate">{{ conversation.to_dict(current_user.id).name }}</h6>
+                                    <p class="mb-0 text-muted small">No messages yet...</p>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Chat Area -->
+        <div class="col-12 col-md-8 col-lg-9 d-flex flex-column">
+            <div id="chatArea" class="d-none flex-column h-100">
+                <!-- Chat Header -->
+                <div class="p-3 border-bottom bg-light" id="chatHeader">
+                    <div class="d-flex align-items-center">
+                        <button class="btn btn-link d-md-none me-2 p-0" id="backToSidebar">
+                            <i class="fas fa-arrow-left"></i>
+                        </button>
+                        <div class="flex-shrink-0 me-3">
+                            <div id="chatAvatar"></div>
+                        </div>
+                        <div class="flex-grow-1">
+                            <h5 class="mb-0" id="chatTitle">Select a conversation</h5>
+                            <p class="mb-0 text-muted small" id="chatStatus">Online</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Messages -->
+                <div class="flex-grow-1 overflow-auto p-3" id="messagesContainer">
+                    <div id="messagesList"></div>
+                </div>
+
+                <!-- Typing Indicator -->
+                <div id="typingIndicator" class="px-3 py-1 text-muted small" style="display: none;">
+                    <i class="fas fa-circle-notch fa-spin me-1"></i>
+                    <span id="typingText">Someone is typing...</span>
+                </div>
+
+                <!-- Message Input -->
+                <div class="p-3 border-top">
+                    <form id="messageForm" class="d-flex gap-2">
+                        <div class="input-group flex-grow-1">
+                            <input type="text" class="form-control" id="messageInput" placeholder="Type a message..." autocomplete="off">
+                            <button type="button" class="btn btn-outline-secondary" id="voiceBtn" title="Send voice message">
+                                <i class="fas fa-microphone"></i>
+                            </button>
+                            <button type="button" class="btn btn-outline-secondary" id="emojiBtn" title="Add emoji">
+                                <i class="fas fa-smile"></i>
+                            </button>
+                        </div>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-paper-plane"></i>
+                        </button>
+                    </form>
+                    
+                    <!-- Voice Recording -->
+                    <div id="voiceRecording" class="mt-2" style="display: none;">
+                        <div class="d-flex align-items-center gap-2">
+                            <div class="text-danger">
+                                <i class="fas fa-circle recording-indicator"></i>
+                            </div>
+                            <span>Recording... <span id="recordingTime">0:00</span></span>
+                            <button type="button" class="btn btn-sm btn-outline-secondary" id="stopRecording">
+                                <i class="fas fa-stop"></i> Stop
+                            </button>
+                            <button type="button" class="btn btn-sm btn-outline-danger" id="cancelRecording">
+                                <i class="fas fa-times"></i> Cancel
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Empty State -->
+            <div id="emptyState" class="d-flex align-items-center justify-content-center h-100">
+                <div class="text-center text-muted">
+                    <div class="display-1 mb-3">
+                        <i class="fas fa-comment-dots opacity-25"></i>
+                    </div>
+                    <h4>Welcome to ChatApp</h4>
+                    <p>Select a conversation to start chatting</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- New Chat Modal -->
+<div class="modal fade" id="newChatModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Start New Chat</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="mb-3">
+                    <input type="text" class="form-control" id="userSearchInput" placeholder="Search users...">
+                </div>
+                <div id="usersList">
+                    {% for user in users %}
+                    <div class="list-group-item list-group-item-action user-item" data-user-id="{{ user.id }}">
+                        <div class="d-flex align-items-center">
+                            <div class="flex-shrink-0 me-3">
+                                {% if user.avatar_url %}
+                                    <img src="{{ user.avatar_url }}" alt="Avatar" class="rounded-circle" width="32" height="32">
+                                {% else %}
+                                    <div class="bg-secondary rounded-circle d-flex align-items-center justify-content-center" style="width: 32px; height: 32px;">
+                                        <i class="fas fa-user text-white" style="font-size: 14px;"></i>
+                                    </div>
+                                {% endif %}
+                            </div>
+                            <div class="flex-grow-1">
+                                <h6 class="mb-0">{{ user.username }}</h6>
+                                <p class="mb-0 text-muted small">{{ user.email }}</p>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Search Results Modal -->
+<div class="modal fade" id="searchModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Search Results</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div id="searchResults"></div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    window.currentUserId = {{ current_user.id if current_user.is_authenticated else 'null' }};
+</script>
+<script src="{{ url_for('static', filename='js/chat.js') }}"></script>
+{% endblock %}
