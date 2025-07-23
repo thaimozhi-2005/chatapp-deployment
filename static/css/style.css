@@ -1,5 +1,6 @@
 /* Custom styles for ChatApp */
 
+<<<<<<< HEAD
 /* Dark theme fixes */
 .bg-light {
     background-color: var(--bs-body-bg) !important;
@@ -52,6 +53,8 @@
     border-top-color: var(--bs-border-color);
 }
 
+=======
+>>>>>>> origin/main
 .min-vh-100 {
     min-height: 100vh;
 }

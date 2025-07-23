@@ -269,6 +269,7 @@ class ChatApp {
             this.scrollToBottom();
         }
         
+<<<<<<< HEAD
         // Update conversation list preview
         this.updateConversationPreview(message.conversation_id, message.content, message.message_type);
     }
@@ -283,6 +284,10 @@ class ChatApp {
                 previewElement.textContent = preview;
             }
         }
+=======
+        // Update conversation list timestamp
+        this.updateConversationTimestamp(message.conversation_id);
+>>>>>>> origin/main
     }
     
     handleTyping() {

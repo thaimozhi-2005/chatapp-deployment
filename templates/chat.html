@@ -52,6 +52,7 @@
                                 </div>
                                 <div class="flex-grow-1 min-width-0">
                                     <h6 class="mb-1 text-truncate">{{ conversation.to_dict(current_user.id).name }}</h6>
+<<<<<<< HEAD
                                     <p class="mb-0 text-muted small conversation-preview" data-conversation-id="{{ conversation.id }}">
                                         {% if conversation.last_message %}
                                             {{ conversation.last_message.content[:50] }}{% if conversation.last_message.content|length > 50 %}...{% endif %}
@@ -59,6 +60,9 @@
                                             No messages yet
                                         {% endif %}
                                     </p>
+=======
+                                    <p class="mb-0 text-muted small">No messages yet...</p>
+>>>>>>> origin/main
                                 </div>
                             </div>
                         </div>
@@ -72,7 +76,11 @@
         <div class="col-12 col-md-8 col-lg-9 d-flex flex-column">
             <div id="chatArea" class="d-none flex-column h-100">
                 <!-- Chat Header -->
+<<<<<<< HEAD
                 <div class="p-3 border-bottom" id="chatHeader" style="background-color: var(--bs-body-bg);">
+=======
+                <div class="p-3 border-bottom bg-light" id="chatHeader">
+>>>>>>> origin/main
                     <div class="d-flex align-items-center">
                         <button class="btn btn-link d-md-none me-2 p-0" id="backToSidebar">
                             <i class="fas fa-arrow-left"></i>
