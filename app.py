@@ -23,14 +23,11 @@ def create_app():
     
     # Configuration
     app.secret_key = os.environ.get("SESSION_SECRET", "dev-secret-key-change-in-production")
-<<<<<<< HEAD
-=======
     database_url = os.environ.get("DATABASE_URL")
     if not database_url:
         logging.error("DATABASE_URL not found in environment variables!")
     else:
         logging.info(f"DATABASE_URL: {database_url}")
->>>>>>> origin/main
     app.config["SQLALCHEMY_DATABASE_URI"] = os.environ.get("DATABASE_URL", "postgresql://localhost/chatapp")
     app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
     app.config["SQLALCHEMY_ENGINE_OPTIONS"] = {
